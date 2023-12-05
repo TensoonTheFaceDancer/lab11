@@ -31,42 +31,53 @@ public final class MusicGroupImpl implements MusicGroup {
 
     @Override
     public Stream<String> orderedSongNames() {
-        return null;
+        return songs.stream().sorted((s1, s2) -> s1.songName.compareTo(s2.songName)).map(s -> s.songName);
     }
 
     @Override
     public Stream<String> albumNames() {
-        return null;
+        return albums.entrySet().stream().map(s -> s.getKey());
     }
 
     @Override
     public Stream<String> albumInYear(final int year) {
-        return null;
+        return albums.entrySet().stream().filter(s -> s.getValue().equals(year)).map(s -> s.getKey());
     }
 
     @Override
     public int countSongs(final String albumName) {
-        return -1;
+        return (int) songs.stream().filter(s -> s.albumName.orElse("").equals(albumName)).count();
     }
 
     @Override
     public int countSongsInNoAlbum() {
-        return -1;
+        return (int) songs.stream().filter(s -> s.albumName.isEmpty()).count();
     }
 
     @Override
     public OptionalDouble averageDurationOfSongs(final String albumName) {
-        return null;
+        return OptionalDouble.of(songs.stream()
+            .filter(s -> s.albumName.orElse("").equals(albumName))
+            .map(s -> s.duration)
+            .reduce((a, b) -> a + b).get() / songs.stream()
+                .filter(s -> s.albumName.orElse("").equals(albumName))
+                .count());
     }
 
     @Override
     public Optional<String> longestSong() {
-        return null;
+        return Optional.ofNullable(songs.stream()
+            .max((s1, s2) -> (s1.getDuration() >= s2.getDuration() ? 1 : -1))
+            .get().getSongName());
     }
 
     @Override
     public Optional<String> longestAlbum() {
-        return null;
+        return Optional.ofNullable(albums.keySet().stream()
+            .map(album -> Map.entry(album, songs.stream()
+                .filter(song -> song.getAlbumName().orElse("").equals(album))
+                    .mapToDouble(song -> song.duration).sum()))
+            .max((a1, a2) -> a1.getValue() >= a2.getValue() ? 1 : -1).get().getKey());
     }
 
     private static final class Song {
